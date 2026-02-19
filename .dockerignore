@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Test artifacts
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+blob-report/
+
+# Auth state
+.auth/
+
+# Logs
+logs/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# Git
+.git/
+.github/
+.gitignore
+
+# Build output
+dist/
+
+# Temp files
+*.log
+test-output.log
+test-run-output.txt
+_temp_*
+
+# Docker (prevent recursive context)
+Dockerfile
+docker-compose.yml
+.dockerignore
+

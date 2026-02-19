@@ -1,0 +1,31 @@
+stages:
+  - test
+
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .npm
+    - node_modules
+
+playwright-tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.58.2-noble
+  script:
+    - npm install
+    - npm ci
+    - npx playwright test --project=chromium
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
+      - allure-results/
+      - test-results/
+      - logs/
+    expire_in: 30 days
+  allow_failure: false
+
+

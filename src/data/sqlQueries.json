@@ -1,0 +1,7 @@
+{
+  "selectQueries": {
+  },
+  "runnerListQueries": {
+    "testCaseLists": "SELECT * FROM openmrs_runner_manager;"
+  }
+}

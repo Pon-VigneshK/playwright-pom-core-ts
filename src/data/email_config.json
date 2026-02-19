@@ -1,0 +1,8 @@
+{
+  "FROM_EMAIL": "ponvignesh02072001@gmail.com",
+  "EMAIL_PASSWORD": "mpym irvw qmkm plam",
+  "TO_EMAIL": "ponvigneshk@outlook.com",
+  "SMTP_HOST": "smtp.gmail.com",
+  "SMTP_PORT": 587
+}
+

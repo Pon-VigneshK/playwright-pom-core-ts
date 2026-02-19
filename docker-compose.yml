@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────
+# Playwright POM Framework — Docker Compose
+# ─────────────────────────────────────────────────────
+#
+# Usage:
+#   docker compose build                    # Build the image
+#   docker compose run playwright           # Run all tests
+#   docker compose run playwright npx playwright test tests/openmrs/ui   # Run specific folder
+#   docker compose run playwright npx playwright test --grep "login"        # Run by grep
+#
+# ─────────────────────────────────────────────────────
+
+services:
+  playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: playwright-pom-tests
+    environment:
+      - CI=true
+      - PW_TEST_HTML_REPORT_OPEN=never
+      - TEST_ENV=qe
+    volumes:
+      # Mount output directories so results persist on the host
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+      - ./allure-results:/app/allure-results
+      - ./logs:/app/logs
+    # No special networking needed — tests connect to external URLs
+    # (https://o3.openmrs.org)
+
