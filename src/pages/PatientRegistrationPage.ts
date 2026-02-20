@@ -33,6 +33,8 @@ export class PatientRegistrationPage extends BasePage {
     readonly legacyIdInput: Locator;
     /** Old Identification Number identifier input. */
     readonly oldIdInput: Locator;
+    /** "Configure" button in the Identifiers section. */
+    readonly configureButton: Locator;
     /** "Register patient" submit button. */
     readonly registerPatientButton: Locator;
     /** "New Patient Created" success toast. */
@@ -53,6 +55,7 @@ export class PatientRegistrationPage extends BasePage {
         this.idCardInput = page.getByRole('textbox', { name: 'ID Card' });
         this.legacyIdInput = page.getByRole('textbox', { name: 'Legacy ID' });
         this.oldIdInput = page.getByRole('textbox', { name: 'Old Identification Number' });
+        this.configureButton = page.getByRole('button', { name: 'Configure' });
         this.registerPatientButton = page.getByRole('button', { name: /register patient/i });
         this.patientCreatedToast = page.getByText('New Patient Created');
     }
@@ -115,6 +118,7 @@ export class PatientRegistrationPage extends BasePage {
         await this.fillDateOfBirth(patientInfo.dob.day, patientInfo.dob.month, patientInfo.dob.year);
 
         if (patientInfo.identifiers) {
+            await this.configureIdentifiers(patientInfo.identifiers);
             await this.fillIdentifiers(patientInfo.identifiers);
         }
 
@@ -134,6 +138,36 @@ export class PatientRegistrationPage extends BasePage {
         await spinbuttons.nth(0).fill(day);
         await spinbuttons.nth(1).fill(month);
         await spinbuttons.nth(2).fill(year);
+    }
+
+    /**
+     * Opens the "Configure identifiers" overlay and enables the specified identifier types.
+     *
+     * OpenMRS O3 hides optional identifier fields behind a configuration overlay.
+     * This method clicks the Identifiers "Configure" button, enables each requested
+     * identifier by clicking its Carbon Design System label (the label element intercepts
+     * pointer events on the hidden checkbox input), and finally applies the selection by
+     * clicking "Configure identifiers". It then waits for the overlay to close before
+     * returning so callers can safely interact with the newly visible input fields.
+     *
+     * @param {object} ids - Identifier options to enable
+     * @param {string} [ids.idCard] - If provided, enables the "ID Card" identifier
+     * @param {string} [ids.legacyId] - If provided, enables the "Legacy ID" identifier
+     * @param {string} [ids.oldId] - If provided, enables the "Old Identification Number" identifier
+     */
+    private async configureIdentifiers(ids: { idCard?: string; legacyId?: string; oldId?: string }): Promise<void> {
+        this.logger.info('Opening Configure identifiers overlay');
+        await this.click(this.configureButton);
+
+        if (ids.idCard) await this.page.getByText('ID Card', { exact: true }).click();
+        if (ids.legacyId) await this.page.getByText('Legacy ID', { exact: true }).click();
+        if (ids.oldId) await this.page.getByText('Old Identification Number', { exact: true }).click();
+
+        await this.click(this.page.getByRole('button', { name: 'Configure identifiers' }));
+        // Wait for the overlay to close before the caller fills the now-visible fields
+        await this.page
+            .getByRole('button', { name: 'Configure identifiers' })
+            .waitFor({ state: 'hidden', timeout: 10000 });
     }
 
     /**
