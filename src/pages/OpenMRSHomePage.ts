@@ -56,6 +56,7 @@ export class OpenMRSHomePage extends BasePage {
         await this.assertUrlContains('home');
         await this.assertVisible(this.openMRSLogo);
         await this.assertVisible(this.superUserText);
+        await this.assertVisible(this.addPatientButton);
     }
 
     /**
