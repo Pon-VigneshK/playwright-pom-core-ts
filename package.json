@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "prepare": "husky",
+    "sync:runner-manager": "npx ts-node scripts/sync-runner-manager.ts",
+    "test": "npx playwright test --project=chromium",
+    "test:headed": "npx playwright test --project=chromium --headed"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

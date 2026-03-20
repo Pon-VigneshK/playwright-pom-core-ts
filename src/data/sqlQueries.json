@@ -3,5 +3,21 @@
   },
   "runnerListQueries": {
     "testCaseLists": "SELECT * FROM openmrs_runner_manager;"
+  },
+  "masterTableQueries": {
+    "checkExecution": "SELECT `Execution` FROM `master_db` WHERE `Servcie Name` = ?"
+  },
+  "runnerManagerQueries": {
+    "findAll": "SELECT `id`, `testName`, `scriptPath`, `author`, `enabled`, `registeredBy` FROM `openmrs_runner_manager`",
+    "findByTestCaseId": "SELECT `id`, `testName`, `scriptPath`, `author`, `enabled`, `registeredBy` FROM `openmrs_runner_manager` WHERE `id` = ?",
+    "register": "INSERT INTO `openmrs_runner_manager` (`id`, `testName`, `testTitle`, `testDescription`, `shouldComplete`, `expectedCount`, `tags`, `enabled`, `scriptPath`, `author`, `registeredBy`) VALUES (?, ?, ?, ?, 1, 0, ?, 1, ?, ?, ?) ON DUPLICATE KEY UPDATE `scriptPath` = VALUES(`scriptPath`), `author` = VALUES(`author`), `updatedAt` = NOW()",
+    "updateExecution": "UPDATE `openmrs_runner_manager` SET `enabled` = ?, `updatedAt` = NOW() WHERE `id` = ?",
+    "ensureColumns": [
+      "SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'openmrs_runner_manager' AND COLUMN_NAME = 'scriptPath'",
+      "ALTER TABLE `openmrs_runner_manager` ADD COLUMN `scriptPath` VARCHAR(500) DEFAULT '' AFTER `tags`",
+      "ALTER TABLE `openmrs_runner_manager` ADD COLUMN `author` VARCHAR(100) DEFAULT 'unknown' AFTER `scriptPath`",
+      "ALTER TABLE `openmrs_runner_manager` ADD COLUMN `registeredBy` VARCHAR(50) DEFAULT 'manual' AFTER `author`",
+      "ALTER TABLE `openmrs_runner_manager` ADD COLUMN `updatedAt` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `registeredBy`"
+    ]
   }
 }

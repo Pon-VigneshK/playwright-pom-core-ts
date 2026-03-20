@@ -42,6 +42,7 @@ import { logResult as dbLogResult } from '../reporting/databaseAuditLogger';
 import { pushTestMetricToElk } from '../utils/elkDashboard';
 import { getTestCaseById, getRunnerData } from '../utils/DataProvider';
 import { getCurrentSessionToken } from '../auth/authorizationManager';
+import { readExecutionStatus } from '../utils/suiteExecutionGuard';
 import type { TestCaseData } from '../types';
 
 /**
@@ -143,6 +144,12 @@ export const test = base.extend<CustomFixtures, WorkerFixtures>({
 
     // ── Data-driven test case fixture ───────────────────────────────
     testCaseData: async ({ testCaseId, testCaseName, logger }, use) => {
+        if (!readExecutionStatus()) {
+            logger.info('Suite execution disabled via master_db — skipping');
+            test.skip(true, `Suite execution disabled for service "${process.env.SERVICE_NAME ?? ''}" in master_db`);
+            return;
+        }
+
         let testCase: TestCaseData | null | undefined;
 
         if (testCaseId) {

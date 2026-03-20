@@ -11,6 +11,7 @@ import { Logger } from '../utils/logger';
 import { closePool } from '../reporting/databaseAuditLogger';
 import { closeConnection } from '../utils/databaseConnectionManager';
 import { DataPreprocessor } from '../utils/DataPreprocessor';
+import { cleanupExecutionStatus } from '../utils/suiteExecutionGuard';
 import fs from 'fs';
 import path from 'path';
 
@@ -106,6 +107,9 @@ async function globalTeardown(_config: FullConfig): Promise<void> {
         const msg = error instanceof Error ? error.message : String(error);
         logger.warn(`Failed to restore preprocessing backup: ${msg}`);
     }
+
+    // ── Lifecycle: Clean up suite execution status file ──
+    cleanupExecutionStatus();
 
     logger.info('Global teardown completed');
 }

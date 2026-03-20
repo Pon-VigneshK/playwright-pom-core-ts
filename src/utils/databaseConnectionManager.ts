@@ -21,7 +21,7 @@
 import fs from 'fs';
 import path from 'path';
 import {Logger} from './logger';
-import {decodeBase64UTF8} from './stringDecoder';
+import {decodeBase64UTF8, isBase64} from './stringDecoder';
 import {ConfigProperties, getConfigValue} from '../enums/configProperties';
 import {FrameworkConstants} from '../constants/frameworkConstants';
 import {DatabaseException} from '../exceptions/frameworkExceptions';
@@ -34,11 +34,11 @@ const logger = new Logger('DatabaseConnectionManager');
  * @enum {string}
  */
 export enum CloudDbProperty {
-    HOSTNAME = 'hostname',
-    PORT = 'port',
-    SCHEMA = 'schema',
-    DBUSERNAME = 'dbusername',
-    DBPASSWORD = 'dbpassword',
+    HOSTNAME = 'db_host',
+    PORT = 'db_port',
+    SCHEMA = 'db_name',
+    DBUSERNAME = 'db_user',
+    DBPASSWORD = 'db_password',
 }
 
 /** Represents a MySQL connection pool (from mysql2/promise) */
@@ -139,12 +139,12 @@ async function connectToMySQL(): Promise<MySqlPool> {
         );
         const database =
             config[CloudDbProperty.SCHEMA] || getConfigValue(ConfigProperties.DB_NAME, '');
-        const user = decodeBase64UTF8(
-            config[CloudDbProperty.DBUSERNAME] || getConfigValue(ConfigProperties.DB_USER, ''),
-        );
-        const password = decodeBase64UTF8(
-            config[CloudDbProperty.DBPASSWORD] || getConfigValue(ConfigProperties.DB_PASSWORD, ''),
-        );
+        const rawUser =
+            config[CloudDbProperty.DBUSERNAME] || getConfigValue(ConfigProperties.DB_USER, '');
+        const rawPassword =
+            config[CloudDbProperty.DBPASSWORD] || getConfigValue(ConfigProperties.DB_PASSWORD, '');
+        const user = isBase64(rawUser) ? decodeBase64UTF8(rawUser) : rawUser;
+        const password = isBase64(rawPassword) ? decodeBase64UTF8(rawPassword) : rawPassword;
 
         mysqlPool = mysql.createPool({
             host,

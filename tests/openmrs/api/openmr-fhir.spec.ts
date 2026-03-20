@@ -1,9 +1,9 @@
-import { test } from '../../../src/fixtures/base.fixture';
+import { test } from '@fixtures/base.fixture';
 import { expect } from '@playwright/test';
 import { withAnnotation } from '../../../src/annotations';
 import { CategoryType } from '../../../src/enums/categoryType';
 import { executeWithAuthRetry } from '../../../src/auth/requestBuilder';
-import { verifyJsonKeyValues } from '../../../src/utils/apiResponseUtils';
+import { verifyJsonKeyValues } from '@utils/apiResponseUtils';
 
     test.describe('OpenMRS FHIR R4 — Patient Resource', () => {
         test.use({ testCaseId: 'API-001' });
@@ -40,7 +40,8 @@ import { verifyJsonKeyValues } from '../../../src/utils/apiResponseUtils';
                 description: testCaseData.testDescription ?? 'Sends a GET request to the FHIR R4 AllergyIntolerance endpoint and validates the response contains resourceType "AllergyIntolerance"',
             });
             const response = await executeWithAuthRetry( authenticatedApi, 'GET',`./AllergyIntolerance`, {},testInfo,);
-                    expect(await verifyJsonKeyValues(response, { resourceType: 'AllergyIntolerance' })).toBeTruthy();
+                    expect(response.status()).toBe(200);
+                    expect(await verifyJsonKeyValues(response, { resourceType: 'Bundle' })).toBeTruthy();
         });
     });
 

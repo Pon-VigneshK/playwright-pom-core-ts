@@ -10,6 +10,8 @@ import { FullConfig } from '@playwright/test';
 import { Logger } from '../utils/logger';
 import { ExecutionContext } from '../context/executionContext';
 import { DataPreprocessor } from '../utils/DataPreprocessor';
+import { isSuiteExecutionEnabled, writeExecutionStatus } from '../utils/suiteExecutionGuard';
+import { RunnerManagerRepository, RunnerManagerSync, TestCaseScanner } from '../runner-manager';
 import fs from 'fs';
 import path from 'path';
 
@@ -37,9 +39,38 @@ const USER_AUTH_FILE = path.join(AUTH_DIR, 'user.json');
  *   globalSetup: './src/fixtures/global-setup.ts',
  * });
  */
+async function validateRequiredEnvVars(logger: Logger): Promise<void> {
+    const required = ['BASE_URL', 'API_URL'];
+    const missing = required.filter((key) => !process.env[key]);
+    if (missing.length > 0) {
+        logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+        throw new Error(`Missing required environment variables: ${missing.join(', ')}. Check your env.<TEST_ENV> file.`);
+    }
+    logger.info('Environment variable validation passed');
+}
+
+async function performHealthCheck(logger: Logger): Promise<void> {
+    const baseUrl = process.env.BASE_URL;
+    if (!baseUrl) return;
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const response = await fetch(baseUrl, { method: 'HEAD', signal: controller.signal });
+        clearTimeout(timeout);
+        logger.info(`Health check passed — ${baseUrl} responded with ${response.status}`);
+    } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.warn(`Health check WARNING — ${baseUrl} is not reachable: ${msg}. Tests may fail.`);
+    }
+}
+
 async function globalSetup(_config: FullConfig): Promise<void> {
     const logger = new Logger('GlobalSetup');
     logger.info('Starting global setup...');
+
+    await validateRequiredEnvVars(logger);
+    await performHealthCheck(logger);
 
     // Ensure auth directory exists
     if (!fs.existsSync(AUTH_DIR)) {
@@ -94,6 +125,15 @@ async function globalSetup(_config: FullConfig): Promise<void> {
     // Serialise context for cross-worker sharing via process.env
     process.env.EXECUTION_CONTEXT = ExecutionContext.serialise();
 
+    // ── Suite Execution Guard: Check master_db for execution flag ──
+    const suiteEnabled = await isSuiteExecutionEnabled();
+    writeExecutionStatus(suiteEnabled);
+    if (!suiteEnabled) {
+        logger.warn(
+            `Suite execution DISABLED for service "${process.env.SERVICE_NAME ?? ''}" — all tests will be skipped`,
+        );
+    }
+
     // Create test results directory
     const resultsDir = 'test-results';
     if (!fs.existsSync(resultsDir)) {
@@ -103,6 +143,24 @@ async function globalSetup(_config: FullConfig): Promise<void> {
     const screenshotsDir = path.join(resultsDir, 'screenshots');
     if (!fs.existsSync(screenshotsDir)) {
         fs.mkdirSync(screenshotsDir, { recursive: true });
+    }
+
+    // ── Runner Manager Sync: Register any new test cases in the DB ──
+    // Runs BEFORE data preprocessing so newly discovered test cases are
+    // present in the DB when the preprocessor reads it.
+    try {
+        const rmSync = new RunnerManagerSync(
+            new RunnerManagerRepository(),
+            new TestCaseScanner(),
+        );
+        const syncResult = await rmSync.syncAll('system', 'execution-sync');
+        logger.info(
+            `Runner Manager sync — scanned=${syncResult.scanned}, ` +
+            `existing=${syncResult.existing}, inserted=${syncResult.inserted}`,
+        );
+    } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.warn(`Runner Manager sync failed (non-blocking): ${msg}`);
     }
 
     // ── Data Preprocessing: Convert CSV/Excel/DB → unified JSON ──

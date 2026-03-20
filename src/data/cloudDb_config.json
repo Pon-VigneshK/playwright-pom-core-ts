@@ -3,6 +3,6 @@
   "DB_PORT": 3306,
   "DB_USER": "root",
   "DB_PASSWORD": "Test123#",
-  "DB_NAME": "service_automation_runner_manager"
+  "DB_NAME": "automation"
 }
 
