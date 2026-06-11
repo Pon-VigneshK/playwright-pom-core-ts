@@ -611,6 +611,75 @@ test('checkout flow', async ({ page }, testInfo) => {
 **Available categories:**
 `HIGH_LEVEL` · `SMOKE` · `REGRESSION` · `SANITY` · `FULL_REGRESSION` · `API` · `UI` · `PERFORMANCE` · `ACCESSIBILITY` · `VISUAL`
 
+### 8. Runner Manager — Method Interceptor
+
+The framework's signature feature: **which tests run, in what priority, with
+what description, and how many times is controlled by external data** — not by
+code. This is the Playwright port of the Selenium/TestNG `IMethodInterceptor`
+pattern.
+
+**The runner-list record** (DB row / Excel row / CSV row / JSON entry):
+
+| Field | Meaning |
+|-------|---------|
+| `testcasename` (`testName`) | Must match the test name (case-insensitive) |
+| `execute` (`enabled`) | yes / no — include or drop the test |
+| `testdescription` (`testDescription`) | Injected as the test description annotation |
+| `priority` | Execution/registration order (ascending; defaults to row order) |
+| `count` | How many data iterations of this test to run (defaults to 1) |
+
+**Key trick — JSON is the canonical format:** the DB, Excel, and CSV sources
+are never consumed directly. They are first normalised into one canonical file,
+`src/data/runnerlist/RUNMANAGER.json` (generated, git-ignored), and the
+interceptor + data provider always read that JSON. Adding a new source only
+requires a new "generate JSON" step.
+
+```json
+{
+  "runmanager": {
+    "testcaselist": [
+      { "testcasename": "VerifyFHIR_PatientResource", "execute": "yes",
+        "testdescription": "Sends a GET request to ...", "priority": 1, "count": 2 }
+    ]
+  }
+}
+```
+
+**How it's invoked:**
+
+1. **Config level (grep)** — `playwright.config.ts` calls `getRunnerGrep()`:
+   tests marked `execute=no` (or missing from the list) are dropped from the
+   run for *every* spec file, matched by `testcasename` or `testTitle`.
+   Opt out with `RUNNER_FILTER=false`. If no runner list exists, all tests run.
+2. **Collection level (`runnerSuite`)** — declared tests are passed through
+   `intercept(methods)` exactly like TestNG's `intercept(methods, context)`:
+   non-matching / `execute=no` methods are not registered, survivors are
+   sorted by `priority`, `testdescription` is injected as the description
+   annotation, and each test is registered `count` times — one data row per
+   iteration via the `runnerData` fixture.
+3. **Global setup** — after `DataPreprocessor` dumps the original source
+   (including remote MySQL) into the unified JSON, the canonical
+   `RUNMANAGER.json` is regenerated so collection always sees fresh data.
+
+```typescript
+import { runnerSuite } from '../../../src/listeners/runnerTest';
+
+runnerSuite('OpenMRS FHIR R4 — Resource Validation', [
+    {
+        name: 'VerifyFHIR_PatientResource',           // ← runner list controls the rest
+        body: async ({ authenticatedApi, runnerData }, testInfo) => {
+            // runs only if execute=yes, `count` times,
+            // runnerData = the data row for this iteration
+        },
+    },
+]);
+```
+
+The invocation count is shared with the data provider
+(`DataProviderUtils.getDataProvider(name)` caps rows via
+`MethodInterceptor.getInvocation(name)`), so the data iteration count is
+externally configurable without touching code.
+
 ---
 
 ## 📝 How to Create a Test Script

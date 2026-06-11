@@ -49,7 +49,7 @@ import type { TestCaseData } from '../types';
  * Per-test fixture types.
  * @typedef {object} CustomFixtures
  */
-type CustomFixtures = {
+export type CustomFixtures = {
     /** Pre-built navigation component for the current page. */
     navigation: NavigationComponent;
     /** Pre-built modal component for the current page. */
@@ -81,6 +81,14 @@ type CustomFixtures = {
     testCaseName: string;
 
     /**
+     * Data row for the current iteration of a runner-managed test
+     * (see {@link module:listeners/runnerTest~runnerSuite}). Each iteration is
+     * injected with one row from the data provider — a single flat map,
+     * regardless of how many columns the data source has.
+     */
+    runnerData: Record<string, unknown>;
+
+    /**
      * Auto-resolved test case data from the unified data source.
      *
      * Handles all boilerplate internally:
@@ -106,7 +114,7 @@ type CustomFixtures = {
  * Worker-scoped fixture types.
  * @typedef {object} WorkerFixtures
  */
-type WorkerFixtures = {
+export type WorkerFixtures = {
     /** Per-worker logger. */
     workerLogger: Logger;
 };
@@ -116,6 +124,7 @@ export const test = base.extend<CustomFixtures, WorkerFixtures>({
     // ── Option fixtures (set via test.use) ──────────────────────────
     testCaseId: ['', { option: true }],
     testCaseName: ['', { option: true }],
+    runnerData: [{}, { option: true }],
 
     // ── Component fixtures ──────────────────────────────────────────
     navigation: async ({ page }, use) => {

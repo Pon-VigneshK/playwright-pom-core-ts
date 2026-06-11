@@ -25,12 +25,27 @@ export {
     formatDuration,
 } from './testLifecycleManager';
 
-/** Runner-list filtering and grep-pattern generation */
+/** Runner-list interception, filtering, and grep-pattern generation */
 export {
     getActiveTests,
     isTestActive,
     getTestConfig,
     getGrepPattern,
+    getRunnerGrep,
+    intercept,
+    getInvocation,
+    invocationCounts,
+    generateRunnerListJson,
+    refreshRunnerListFromJson,
     resetRunnerListCache,
 } from './methodInterceptor';
-export type { RunnerListEntry } from './methodInterceptor';
+export type { RunnerListEntry, InterceptedTest } from './methodInterceptor';
+
+/** Runner-managed test registration (the Playwright "MethodInterceptor") */
+export { runnerSuite } from './runnerTest';
+export type {
+    RunnerTestDefinition,
+    RunnerTestBody,
+    RunnerTestArgs,
+    RunnerSuiteOptions,
+} from './runnerTest';
