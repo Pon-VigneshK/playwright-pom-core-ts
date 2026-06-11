@@ -1,59 +1,50 @@
-import { test } from '@fixtures/base.fixture';
+/**
+ * OpenMRS FHIR R4 API tests — registered through the Runner Manager.
+ *
+ * No test below decides for itself whether it runs: the runner list
+ * (DB / Excel / CSV / JSON → canonical RUNMANAGER.json) controls execution
+ * (`execute`), ordering (`priority`), reporting (`testdescription`), and the
+ * number of data iterations (`count`). Each iteration receives its data row
+ * as a single flat map through the `runnerData` fixture.
+ */
 import { expect } from '@playwright/test';
-import { withAnnotation } from '../../../src/annotations';
+import { runnerSuite } from '../../../src/listeners/runnerTest';
 import { CategoryType } from '../../../src/enums/categoryType';
 import { executeWithAuthRetry } from '../../../src/auth/requestBuilder';
 import { verifyJsonKeyValues } from '@utils/apiResponseUtils';
 
-    test.describe('OpenMRS FHIR R4 — Patient Resource', () => {
-        test.use({ testCaseId: 'API-001' });
-        test('Verify FHIR Patient resource returns valid response with correct resourceType', async ({ testCaseData, authenticatedApi }, testInfo) => {
-            withAnnotation(testInfo, {
-                authors: ['Vicky'],
-                categories: [CategoryType.REGRESSION, CategoryType.API],
-                description: testCaseData.testDescription ?? 'Sends a GET request to the FHIR R4 Patient endpoint and validates the response contains resourceType "Patient"',
-            });
-            const response = await executeWithAuthRetry( authenticatedApi, 'GET',`./Patient`, {},testInfo,);
-                    expect(await verifyJsonKeyValues(response, { resourceType: 'Patient' })).toBeTruthy();
-        });
-    });
-
-    test.describe('OpenMRS FHIR R4 — Task Resource', () => {
-        test.use({ testCaseId: 'API-002' });
-        test('Verify FHIR Task resource returns valid response with correct resourceType', async ({ testCaseData, authenticatedApi }, testInfo) => {
-            withAnnotation(testInfo, {
-                authors: ['Vicky'],
-                categories: [CategoryType.REGRESSION, CategoryType.API],
-                description: testCaseData.testDescription ?? 'Sends a GET request to the FHIR R4 Task endpoint and validates the response contains resourceType "Task"',
-            });
-            const response = await executeWithAuthRetry( authenticatedApi, 'GET',`./Task`, {},testInfo,);
-                    expect(await verifyJsonKeyValues(response, { resourceType: 'Task' })).toBeTruthy();
-        });
-    });
-
-    test.describe('OpenMRS FHIR R4 — AllergyIntolerance Resource', () => {
-        test.use({ testCaseId: 'API-003' });
-        test('Verify FHIR AllergyIntolerance resource returns valid response with correct resourceType', async ({ testCaseData, authenticatedApi }, testInfo) => {
-            withAnnotation(testInfo, {
-                authors: ['Vicky'],
-                categories: [CategoryType.REGRESSION, CategoryType.API],
-                description: testCaseData.testDescription ?? 'Sends a GET request to the FHIR R4 AllergyIntolerance endpoint and validates the response contains resourceType "AllergyIntolerance"',
-            });
-            const response = await executeWithAuthRetry( authenticatedApi, 'GET',`./AllergyIntolerance`, {},testInfo,);
-                    expect(response.status()).toBe(200);
-                    expect(await verifyJsonKeyValues(response, { resourceType: 'Bundle' })).toBeTruthy();
-        });
-    });
-
-    test.describe('OpenMRS FHIR R4 — Encounter Resource', () => {
-        test.use({ testCaseId: 'API-004' });
-        test('Verify FHIR Encounter resource returns valid response with correct resourceType', async ({ testCaseData, authenticatedApi }, testInfo) => {
-            withAnnotation(testInfo, {
-                authors: ['Vicky'],
-                categories: [CategoryType.REGRESSION, CategoryType.API],
-                description: testCaseData.testDescription ?? 'Sends a GET request to the FHIR R4 Encounter endpoint and validates the response contains resourceType "Encounter"',
-            });
-           const response = await executeWithAuthRetry( authenticatedApi, 'GET',`./Encounter`, {},testInfo,);
-                    expect(await verifyJsonKeyValues(response, { resourceType: 'Encounter' })).toBeTruthy();
-        });
-    });
+runnerSuite('OpenMRS FHIR R4 — Resource Validation', [
+    {
+        name: 'VerifyFHIR_PatientResource',
+        annotation: { authors: ['Vicky'], categories: [CategoryType.REGRESSION, CategoryType.API] },
+        body: async ({ authenticatedApi }, testInfo) => {
+            const response = await executeWithAuthRetry(authenticatedApi, 'GET', `./Patient`, {}, testInfo);
+            expect(await verifyJsonKeyValues(response, { resourceType: 'Patient' })).toBeTruthy();
+        },
+    },
+    {
+        name: 'VerifyFHIR_TaskResource',
+        annotation: { authors: ['Vicky'], categories: [CategoryType.REGRESSION, CategoryType.API] },
+        body: async ({ authenticatedApi }, testInfo) => {
+            const response = await executeWithAuthRetry(authenticatedApi, 'GET', `./Task`, {}, testInfo);
+            expect(await verifyJsonKeyValues(response, { resourceType: 'Task' })).toBeTruthy();
+        },
+    },
+    {
+        name: 'VerifyFHIR_AllergyIntoleranceResource',
+        annotation: { authors: ['Vicky'], categories: [CategoryType.REGRESSION, CategoryType.API] },
+        body: async ({ authenticatedApi }, testInfo) => {
+            const response = await executeWithAuthRetry(authenticatedApi, 'GET', `./AllergyIntolerance`, {}, testInfo);
+            expect(response.status()).toBe(200);
+            expect(await verifyJsonKeyValues(response, { resourceType: 'Bundle' })).toBeTruthy();
+        },
+    },
+    {
+        name: 'VerifyFHIR_EncounterResource',
+        annotation: { authors: ['Vicky'], categories: [CategoryType.REGRESSION, CategoryType.API] },
+        body: async ({ authenticatedApi }, testInfo) => {
+            const response = await executeWithAuthRetry(authenticatedApi, 'GET', `./Encounter`, {}, testInfo);
+            expect(await verifyJsonKeyValues(response, { resourceType: 'Encounter' })).toBeTruthy();
+        },
+    },
+]);

@@ -1,11 +1,18 @@
 import { defineConfig, devices } from '@playwright/test';
 import { loadEnvFiles } from './src/config/envLoader';
+import { getRunnerGrep } from './src/listeners/methodInterceptor';
 
 // Load environment variables from `.env` + `env.<TEST_ENV>`
 const { envName } = loadEnvFiles({ cwd: __dirname });
 
 // Environment configuration
 const BASE_URL = process.env.BASE_URL || process.env.APP_URL;
+
+// Runner Manager (method interceptor): the runner list — normalised from the
+// configured data source into RUNMANAGER.json — decides which tests are in the
+// run. Tests marked execute=no (or missing from the list) are dropped via grep.
+// Opt out with RUNNER_FILTER=false.
+const runnerGrep = getRunnerGrep();
 
 // Dynamic retry: RETRY env/config > CI default (2) > local default (0)
 function resolveRetries(): number {
@@ -45,6 +52,9 @@ export default defineConfig({
 
     // Run tests in parallel
     fullyParallel: true,
+
+    // Runner-list filter (Runner Manager — MethodInterceptor)
+    ...(runnerGrep ? { grep: runnerGrep } : {}),
 
     // Fail the build on CI if test.only is present
     forbidOnly: !!process.env.CI,

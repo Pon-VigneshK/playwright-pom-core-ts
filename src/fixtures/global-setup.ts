@@ -12,6 +12,7 @@ import { ExecutionContext } from '../context/executionContext';
 import { DataPreprocessor } from '../utils/DataPreprocessor';
 import { isSuiteExecutionEnabled, writeExecutionStatus } from '../utils/suiteExecutionGuard';
 import { RunnerManagerRepository, RunnerManagerSync, TestCaseScanner } from '../runner-manager';
+import { refreshRunnerListFromJson } from '../listeners/methodInterceptor';
 import fs from 'fs';
 import path from 'path';
 
@@ -180,6 +181,19 @@ async function globalSetup(_config: FullConfig): Promise<void> {
     } catch (error) {
         logger.error(`Data preprocessing failed: ${error}`);
         throw error;
+    }
+
+    // ── Runner Manager (MethodInterceptor): regenerate the canonical runner
+    // list from the freshly preprocessed JSON. Test collection happens after
+    // global setup, so runnerSuite()/the data provider always intercept
+    // against fresh data — even when the original source is a remote DB that
+    // cannot be read synchronously at config-load time.
+    try {
+        const entries = refreshRunnerListFromJson();
+        logger.info(`Canonical runner list refreshed — ${entries.length} entries in RUNMANAGER.json`);
+    } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.warn(`Runner list refresh failed (non-blocking): ${msg}`);
     }
 
     logger.info('Global setup completed');

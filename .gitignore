@@ -9,7 +9,10 @@ node_modules/
 allure-results/
 allure-report/
 node_modules/
-logs/   
+logs/
 .auth/
 package-lock.json
+
+# Generated canonical runner list (Runner Manager — MethodInterceptor)
+/src/data/runnerlist/
 

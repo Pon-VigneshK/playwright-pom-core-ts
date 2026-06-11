@@ -98,6 +98,8 @@ export const FrameworkConstants = Object.freeze({
     ALLURE_RESULTS_DIR: path.join(PROJECT_ROOT, 'allure-results'),
     /** Absolute path to the runner list JSON file. */
     RUNNER_LIST_PATH: path.join(PROJECT_ROOT, 'src', 'data', 'runnerManager.json'),
+    /** Absolute path to the canonical (generated) runner list — all sources are normalised here. */
+    RUNMANAGER_JSON: path.join(PROJECT_ROOT, 'src', 'data', 'runnerlist', 'RUNMANAGER.json'),
     /** Absolute path to the JSON test data file. */
     TEST_DATA_JSON: path.join(PROJECT_ROOT, 'src', 'data', 'runnerManager.json'),
     /** Absolute path to the CSV test data file. */
